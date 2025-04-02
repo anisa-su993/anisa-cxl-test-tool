@@ -92,6 +92,23 @@ SW="-object memory-backend-file,id=cxl-mem0,share=on,mem-path=/tmp/cxltest.raw,s
     -device cxl-type3,bus=swport3,memdev=cxl-mem3,lsa=cxl-lsa3,id=cxl-pmem3 \
     -M cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=4G,cxl-fmw.0.interleave-granularity=4k"
 
+MHSLD_HEAD="-device pxb-cxl,id=cxl.0,bus=pcie.0,bus_nr=52 \
+    -device cxl-upstream,port=2,sn=1234,bus=cxl_rp_port0,id=us0,addr=0.0,multifunction=on, \
+    -device cxl-rp,id=rp0,bus=cxl.0,chassis=0,port=0,slot=0 \
+    -object memory-backend-ram,id=mem0,size=4G \
+    -device cxl-mhsld,bus=rp0,num-dc-regions=1,volatile-dc-memdev=mem0,id=cxl-mem0,sn=66667,mhd-head=0,mhd-state_file=mhd_metadata,mhd-init=true \
+    -M cxl-fmw.0.targets.0=cxl.0,cxl-fmw.0.size=4G \
+    -qmp unix:/tmp/qmp-sock-1,server,nowait \
+    -device i2c_mctp_cxl,bus=aspeed.i2c.bus.0,address=4,target=us0 \
+    -device i2c_mctp_cxl,bus=aspeed.i2c.bus.0,address=5,target=cxl-mem0"
+
+MHSLD_GUEST="-device pxb-cxl,id=cxl.0,bus=pcie.0,bus_nr=52 \
+    -device cxl-rp,id=rp0,bus=cxl.0,chassis=0,port=0,slot=0 \
+    -object memory-backend-ram,id=mem0,size=4G \
+    -device cxl-mhsld,bus=rp0,num-dc-regions=1,volatile-dc-memdev=mem0,id=cxl-mem1,sn=66667,mhd-head!=0,mhd-state_file=mhd_metadata,mhd-init=false \
+    -M cxl-fmw.0.targets.0=cxl.0,cxl-fmw.0.size=4G \
+    -qmp unix:/tmp/qmp-sock-1,server,nowait \
+    -device i2c_mctp_cxl,bus=aspeed.i2c.bus.0,address=6,target=cxl-mem1"
 
 def find_topology(top):
     if top.upper() == "RP1":
@@ -102,6 +119,10 @@ def find_topology(top):
         return FM_DCD
     elif top.upper() == "SW":
         return SW
+    elif top.upper() == "MHSLD_HEAD":
+        return MHSLD_HEAD
+    elif top.upper() == "MHSLD_GUEST":
+        return MHSLD_GUEST
     else:
         return ""
 
@@ -305,7 +326,7 @@ def create_namespace(region):
                 break
             if "\"dev\":" in line:
                 ns = line.split(":")[1].replace(",", "").strip()
-                
+
         return ns,dax
 
 def destroy_namespace(ns):

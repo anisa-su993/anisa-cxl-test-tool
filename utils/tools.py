@@ -63,7 +63,7 @@ def bg_cmd(cmd, echo=False):
     fd=open(run_log, "w")
     if echo:
         print(cmd)
-    process = subprocess.Popen(cmd, shell=True, stdout=fd, stderr=fd)  
+    process = subprocess.Popen(cmd, shell=True, stdout=fd, stderr=fd)
     time.sleep(2)
     subprocess.run(['stty', 'sane'])
 
@@ -175,7 +175,7 @@ def process_id(name):
     for process in psutil.process_iter(['name', 'username']):
         try:
             # Check if the process name matches
-            if name in process.info['name'] and process.info['username'] == sh_cmd("whoami"): 
+            if name in process.info['name'] and process.info['username'] == sh_cmd("whoami"):
                 return process.pid
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle the cases where the process might terminate during iteration
@@ -222,7 +222,7 @@ def parse_json(file):
             return data
 
 def output_to_json_data(output):
-    file="/tmp/tmp.json"
+    file=os.getenv("json_tmp")
     write_to_file(file, output)
     data=parse_json(file)
     return data
@@ -433,7 +433,7 @@ def vm_is_running():
             continue
         try:
             # Check if the process name matches
-            if name in process.info['name']: 
+            if name in process.info['name']:
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle the cases where the process might terminate during iteration
@@ -475,11 +475,86 @@ def run_with_dcd_mctp():
             continue;
     return has_dcd,has_mctp
 
+def run_guest(qemu, topo, kernel, accel_mode=accel_mode, run_direct=False):
+    print("kernel=%s\tqemu=%s" %(kernel, qemu))
+    extra_opts = system_env("qemu_extra_opt")
+    # update the image directory
+    host_dir=system_env("cxl_host_dir")
+    if host_dir:
+        topo = topo.replace("/tmp",host_dir)
+        if not os.path.exists(host_dir):
+            sh_cmd("mkdir -p %s"%host_dir)
+        else:
+            if len(os.listdir(host_dir)) != 0:
+                choice = input("back memory/lsa file exist from previous run, delete them Y/N(default Y): ")
+                if choice and choice.lower() == "n":
+                    print("Warning: run with existing run files, may cause unexpected behavior!!!")
+                else:
+                    exec_shell_direct("rm -rf %s/*"%host_dir)
+
+    ssh_port=2026 # 1.!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    net_config = system_env("net_config")
+    log_dir = system_path("cxl_test_log_dir")
+    if not log_dir:
+        log_dir = "/tmp/"
+    elif not os.path.exists(log_dir):
+        sh_cmd("mkdir %s"%log_dir, echo=True)
+    print("Starting VM...")
+    bin=qemu
+    home=os.getenv("HOME")
+
+    if accel_mode == "kvm":
+        if not os.access("/dev/kvm", os.R_OK) or not os.access("/dev/kvm", os.W_OK):
+            cmd = "sudo chmod 666 /dev/kvm"
+            sh_cmd(cmd,echo=True)
+
+    # 2. !!!!!!!!!!!!! disable qmp
+    # qmp_port = system_env("qmp_port")
+    # if not qmp_port:
+    #     qmp_port = 4445
+    # SHARED_CFG="-qmp tcp:localhost:%s,server,wait=off"%qmp_port
+
+    # 3. !!!!!!!!!!!!!!!!!!!!!!
+    # monitor_port = system_env("monitor_port")
+    # if not monitor_port:
+    #     monitor_port= 12346
+
+    # Add -s here if needed
+    cmd=" -s "+extra_opts+ " -kernel "+kernel+" -append "+os.getenv("KERNEL_CMD")+ \
+            " -smp " +num_cpus+ \
+            " -accel "+accel_mode + \
+            " -serial mon:stdio "+ \
+            " -nographic " + \
+            " "+ net_config + " "+\
+            " -drive file="+system_path("QEMU_IMG")+",index=0,media=disk,format="+format+\
+            " -machine q35,cxl=on -cpu qemu64,mce=on -m 8G,maxmem=64G,slots=8 "+ \
+            " -virtfs local,path=/lib/modules,mount_tag=modshare,security_model=mapped "+\
+            " -virtfs local,path=%s"%home+",mount_tag=homeshare,security_model=mapped "+ topo
+
+    write_to_file("%s/run-cmd"%log_dir, bin+cmd)
+    write_to_file("%s/gdb-run-cmd"%log_dir, "gdb --args "+bin+cmd)
+    if not run_direct:
+        bg_cmd(bin+cmd)
+    else:
+        exec_shell_direct(bin+cmd)
+    status_file="%s/qemu2-status"%log_dir #!!!!!!!!!!!!!!! qemu#-status
+    if vm_is_running():
+        write_to_file(status_file, "QEMU:running")
+        write_to_file("%s/topo"%log_dir, topo);
+        usr = system_path("vm_usr")
+        if not usr:
+            usr = "root"
+        print("QEMU instance is up, access it: ssh %s@localhost -p %s"%(usr, ssh_port))
+    else:
+        write_to_file(status_file, "")
+        print("Start Qemu failed, check %s/qemu.log for more information"%log_dir)
+
 def run_qemu(qemu, topo, kernel, accel_mode=accel_mode, run_direct=False):
     if vm_is_running():
         print("VM is running, exit")
         return;
-    
+
+    print("kernel=%s\tqemu=%s" %(kernel, qemu))
     extra_opts = system_env("qemu_extra_opt")
     # update the image directory
     host_dir=system_env("cxl_host_dir")

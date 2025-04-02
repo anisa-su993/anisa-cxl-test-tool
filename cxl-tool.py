@@ -15,6 +15,7 @@ import utils.mctp as mctp
 import utils.ras as ras
 from utils.tools import system_path as system_path
 from utils.tools import run_qemu as run_qemu
+from utils.tools import run_guest as run_guest
 from utils.tools import shutdown_vm as shutdown_vm
 from utils.tools import vm_is_running as vm_is_running
 from utils.tools import sh_cmd as sh_cmd
@@ -54,7 +55,7 @@ def expend_variable(value):
                 continue
             item = item.strip("\"")
         rs += item + " "
-    
+
     return rs
 
 def read_config(conf):
@@ -414,6 +415,9 @@ parser.add_argument('--build-kernel-arm', help='only build kernel for aarch64', 
 parser.add_argument('--start-arm', help='start a VM for aarch64', action='store_true')
 parser.add_argument('--test-einj', help='workflow: testing aer inject with [topo] as parameter', required=False, default="")
 
+# anisa
+parser.add_argument('--anisa', action='store_true')
+
 args = vars(parser.parse_args())
 
 if args["verbose"]:
@@ -481,7 +485,8 @@ if args["run"] or args["run_direct"]:
     direct = False
     if args["run_direct"]:
         direct = True
-    run_qemu(qemu=QEMU, topo=topo, kernel=KERNEL_PATH, accel_mode=args["accel"], run_direct = direct)
+    run_guest(qemu=QEMU, topo=topo, kernel=KERNEL_PATH, accel_mode=args["accel"], run_direct = direct)
+    # run_qemu(qemu=QEMU, topo=topo, kernel=KERNEL_PATH, accel_mode=args["accel"], run_direct = direct)
 
 if args["login"]:
     login_vm()
@@ -565,3 +570,31 @@ if args["start_arm"]:
     arm.start_vm(qemu_dir=qemu_dir, topo=topo, kernel=kernel_img, bios=bios)
 if args["test_einj"]:
     ras.test_aer_inject(args['test_einj'])
+
+if args["anisa"]:
+    topo=cxl.find_topology("FM_DCD")
+    direct = False
+    print("Starting VM---------------------------------")
+    run_qemu(qemu=QEMU, topo=topo, kernel=KERNEL_PATH, accel_mode=args["accel"], run_direct = direct)
+    print("Loading drivers-----------------------------------------")
+    cxl.load_driver()
+    print("Setting up MCTP-----------------------------------------------------")
+    mctp.mctp_setup(cxl_test_tool_dir+"/test-workflows/mctp.sh")
+    print("Creating DC Region---------------------------------------------------")
+    region=cxl.create_dc_region(memdev='mem0')
+    if not region:
+        region=cxl.create_dc_region(memdev='mem1')
+        if not region:
+            print("Create DC region failed")
+
+    # Create MHD head
+    # direct = False
+    # topo=cxl.find_topology("MHSLD_HEAD")
+    # print("Starting HEAD")
+    # run_qemu(qemu=QEMU, topo=topo, kernel=KERNEL_PATH, accel_mode=args["accel"], run_direct = direct)
+    # print("Setting up MCTP-----------------------------------------------------")
+    # mctp.mctp_setup(cxl_test_tool_dir+"/test-workflows/mctp.sh")
+    # Create MHD "guests"
+    # topo=cxl.find_topology("MHSLD_GUEST")
+    # run_guest(qemu=QEMU, topo=topo, kernel=KERNEL_PATH, accel_mode=args["accel"], run_direct = direct)
+
