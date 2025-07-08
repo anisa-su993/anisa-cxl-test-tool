@@ -64,7 +64,7 @@ def bg_cmd(cmd, echo=False, port_offset = 0):
     fd=open(run_log, "w")
     if echo:
         print(cmd)
-    process = subprocess.Popen(cmd, shell=True, stdout=fd, stderr=fd)  
+    process = subprocess.Popen(cmd, shell=True, stdout=fd, stderr=fd)
     time.sleep(2)
     subprocess.run(['stty', 'sane'])
 
@@ -137,7 +137,8 @@ def package_installed_on_vm(package):
         return False
     cmd="apt-cache policy %s | grep -w Installed"%package
     rs=execute_on_vm(cmd)
-    if rs:
+    print(f"Debug: apt-cache output = '{rs}'")
+    if rs and ":" in rs:
         version=rs.split(":")[1].strip()
         if "none" in version:
             return False
@@ -176,7 +177,7 @@ def process_id(name):
     for process in psutil.process_iter(['name', 'username']):
         try:
             # Check if the process name matches
-            if name in process.info['name'] and process.info['username'] == sh_cmd("whoami"): 
+            if name in process.info['name'] and process.info['username'] == sh_cmd("whoami"):
                 return process.pid
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle the cases where the process might terminate during iteration
@@ -296,7 +297,7 @@ def setup_qemu(url, branch, qemu_dir, arch="", debug=True, reconfig=True):
             git_clone=False
 
     if git_clone:
-        cmd="git clone -b %s --single-branch %s %s"%(branch, url, qemu_dir)
+        cmd="git clone --depth 1 -b %s --single-branch %s %s"%(branch, url, qemu_dir)
         rs=sh_cmd(cmd, echo=True)
         print(rs)
     if reconfig:
@@ -492,7 +493,7 @@ def run_qemu(qemu, topo, kernel, accel_mode=accel_mode, run_direct=False, qemu_i
     if not allow_multivm and vm_is_running():
         print("VM is running, exit")
         return;
-    
+
     extra_opts = system_env("qemu_extra_opt")
     # update the image directory
     host_dir=system_env("cxl_host_dir")

@@ -1,8 +1,9 @@
-.vars.config
 .cxl-topology.xml
 *.swp
 *~
 .*
+!.vars.config
+!.gitignore
 *.pyc
 */*.pyc
 utils/__pycache__

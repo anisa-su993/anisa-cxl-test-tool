@@ -54,7 +54,7 @@ def expend_variable(value):
                 continue
             item = item.strip("\"")
         rs += item + " "
-    
+
     return rs
 
 def read_config(conf):
@@ -164,7 +164,7 @@ def gdb_kernel():
         signal.signal(signal.SIGINT, original_sigint_handler)
 
 
-def create_qemu_image(img_path, size="16g", ubuntu=False):
+def create_qemu_image(img_path, size="8g", ubuntu=False):
     if not img_path:
         print("No qemu image path given")
         return
@@ -223,6 +223,10 @@ def create_qemu_image(img_path, size="16g", ubuntu=False):
     if not os.path.exists(os.path.expanduser("~/.ssh")):
         print("Note: .ssh not found on the host, continue to generate ssh key")
         cmd = "ssh-keygen"
+        tools.exec_shell_direct(cmd, echo=True)
+        cmd = "ls -l ~/.ssh"
+        tools.exec_shell_direct(cmd, echo=True)
+        cmd = "cat ~/.ssh/*.pub"
         tools.exec_shell_direct(cmd, echo=True)
 
     pub_files = [f for f in os.listdir(os.path.expanduser("~/.ssh")) if f.endswith('.pub')]
