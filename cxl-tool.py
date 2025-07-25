@@ -582,7 +582,7 @@ if args["setup_mctp"]:
     mctp.mctp_setup(cxl_test_tool_dir+"/test-workflows/mctp.sh")
 
 if args["setup_mctp_usb"]:
-    mctp.mctp_setup(cxl_test_tool_dir+"/test-workflows/mctp-usb.sh")
+    mctp.mctp_setup(cxl_test_tool_dir+"/test-workflows/mctp-usb-setup.sh")
 
 if args["setup_mctp_fm"]:
     os.environ["ssh_port"] = str(int(tools.system_env("ssh_port")) + 1)

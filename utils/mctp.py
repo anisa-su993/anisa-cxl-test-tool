@@ -6,7 +6,7 @@ import utils.tools as tools
 def install_mctp_pkg():
     url="https://github.com/CodeConstruct/mctp.git"
     mctp_dir="~/mctp"
-    
+
     if not tools.command_found_on_vm("mctp"):
         tools.install_packages_on_vm("libsystemd-dev python3-pytest meson")
     else:
@@ -27,7 +27,7 @@ def install_mctp_pkg():
 def install_mctp_pkg_usb():
     url="https://github.com/CodeConstruct/mctp.git"
     mctp_dir="/tmp/mctp"
-    
+
     if not tools.command_found_on_vm("mctp"):
         tools.install_packages_on_vm("libsystemd-dev python3-pytest meson")
     else:
@@ -39,7 +39,7 @@ def install_mctp_pkg_usb():
     if not tools.path_exist_on_vm(mctp_dir):
         tools.execute_on_vm("git clone %s %s"%(url, mctp_dir), echo=True)
 
-    tools.execute_on_vm("cd %s; meson setup obj; ninja -C obj; meson install -C obj"%mctp_dir, echo=True)
+    tools.execute_on_vm("cd %s; meson setup obj -Dtests=false; ninja -C obj; meson install -C obj"%mctp_dir, echo=True)
     tools.execute_on_vm("cd %s; cp conf/mctpd-dbus.conf /etc/dbus-1/system.d/"%mctp_dir, echo=True)
     tools.execute_on_vm("cd %s; cat conf/mctpd.service | sed 's/sbin/local\\/sbin/' > /etc/systemd/system/mctpd.service"%mctp_dir, echo=True)
 
