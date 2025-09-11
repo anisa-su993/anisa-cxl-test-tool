@@ -81,7 +81,7 @@ def read_config(conf):
 
 def compile_ndctl(dir):
     cmd = "cd %s;\
-        meson setup build;\
+        meson setup -Dsystemd=disabled build;\
         meson compile -C build;\
         meson install -C build" %dir
     print(cmd)
