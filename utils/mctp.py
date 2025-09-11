@@ -29,7 +29,7 @@ def install_mctp_pkg_usb():
     mctp_dir="/tmp/mctp"
     
     if not tools.command_found_on_vm("mctp"):
-        tools.install_packages_on_vm("libsystemd-dev python3-pytest meson")
+        tools.install_packages_on_vm("libsystemd-dev pkg-config python3-pytest meson")
     else:
         if tools.path_exist_on_vm("/etc/systemd/system/mctpd.service"):
             print("mctpd service already configured, skip")

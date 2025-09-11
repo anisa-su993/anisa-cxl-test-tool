@@ -64,7 +64,7 @@ def bg_cmd(cmd, echo=False, port_offset = 0):
     fd=open(run_log, "w")
     if echo:
         print(cmd)
-    process = subprocess.Popen(cmd, shell=True, stdout=fd, stderr=fd)  
+    process = subprocess.Popen(cmd, shell=True, stdout=fd, stderr=fd)
     time.sleep(2)
     subprocess.run(['stty', 'sane'])
 
@@ -176,7 +176,7 @@ def process_id(name):
     for process in psutil.process_iter(['name', 'username']):
         try:
             # Check if the process name matches
-            if name in process.info['name'] and process.info['username'] == sh_cmd("whoami"): 
+            if name in process.info['name'] and process.info['username'] == sh_cmd("whoami"):
                 return process.pid
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle the cases where the process might terminate during iteration
@@ -492,7 +492,7 @@ def run_qemu(qemu, topo, kernel, accel_mode=accel_mode, run_direct=False, qemu_i
     if not allow_multivm and vm_is_running():
         print("VM is running, exit")
         return;
-    
+
     extra_opts = system_env("qemu_extra_opt")
     # update the image directory
     host_dir=system_env("cxl_host_dir")
