@@ -54,7 +54,7 @@ def expend_variable(value):
                 continue
             item = item.strip("\"")
         rs += item + " "
-    
+
     return rs
 
 def read_config(conf):
@@ -332,7 +332,9 @@ def cxl_vmem_test(memdev):
     out = execute_on_vm(cmd)
     print(out)
 
-def dcd_test(memdev):
+def dcd_test(memdev, ssh_port, qmp_port):
+    print(f"ssh port: {ssh_port}")
+    print(f"qmp port: {qmp_port}")
     if not vm_is_running():
         print("VM is not running, skip")
         return
@@ -354,24 +356,7 @@ def dcd_test(memdev):
 
     dev=cxl.find_cmdline_device_id(memdev)
     print(dev)
-    dcd.handle_dc_extents_op(memdev)
-
-    ans = "N"
-    try:
-        ans=input("Do you want to continue to create dax device for DC(Y/N):")
-    except EOFError:
-        pass
-    if not ans or ans.lower() == "n":
-        return
-    dax=cxl.create_dax_device(region, echo=True)
-    if not dax:
-        print("Create dax device failed")
-        return
-    cmd="daxctl reconfigure-device %s -m system-ram"%dax
-    execute_on_vm(cmd, echo=True)
-    cmd="lsmem"
-    rs=execute_on_vm(cmd)
-    print(rs)
+    dcd.handle_dc_extents_op(memdev, qmp_port)
 
 parser = argparse.ArgumentParser(description='A tool for cxl test with Qemu setup')
 parser.add_argument('-v','--verbose', help='show more message', action='store_true')
@@ -428,10 +413,14 @@ parser.add_argument('--setup-kernel-arm', help='configure and build kernel for a
 parser.add_argument('--build-kernel-arm', help='only build kernel for aarch64', action='store_true')
 parser.add_argument('--start-arm', help='start a VM for aarch64', action='store_true')
 parser.add_argument('--test-einj', help='workflow: testing aer inject with [topo] as parameter', required=False, default="")
-parser.add_argument('--attach-fm', help='Attach FM VM to an existing VM', action='store_true')
+parser.add_argument('--attach-host', help='Attach FM VM to an existing VM', action='store_true')
 
 parser.add_argument('--set-vars', help='choose a config file as .vars.config',
                     required = False, default="")
+
+parser.add_argument('--qmp-port', required = False, default=4445)
+parser.add_argument('--ssh-port', required = False)
+parser.add_argument('--img-path', required = False)
 
 args = vars(parser.parse_args())
 
@@ -478,6 +467,12 @@ if args["extra"]:
 if args["mode"]:
     os.environ["dc_mode"] = "dynamic_" + args["mode"]
 
+if args["ssh_port"]:
+    os.environ["ssh_port"] = str(args["ssh_port"])
+
+if args["qmp_port"]:
+    os.environ["qmp_port"] = str(args["qmp_port"])
+
 if args["setup_qemu"]:
     tools.setup_qemu(url=os.getenv("qemu_url"), branch=os.getenv("qemu_branch"), qemu_dir=system_path("QEMU_ROOT"))
 if args["setup_qemu_arm"]:
@@ -501,7 +496,8 @@ if args["kconfig"]:
     tools.configure_kernel(kernel_dir=system_path("KERNEL_ROOT"))
 
 if args["create_image"]:
-    create_qemu_image(img_path=system_path("QEMU_IMG"))
+    img_path = args["img_path"] or system_path("QEMU_IMG")
+    create_qemu_image(img_path=img_path, size="8g")
 
 if args["raw"] and not args["topo"]:
     parser.error('--raw requires --topo/-T')
@@ -569,7 +565,7 @@ if args["cxl_vmem_test"]:
 if args["create_dcR"]:
     cxl.create_dc_region(args["create_dcR"])
 if args["dcd_test"]:
-    dcd_test(args["dcd_test"])
+    dcd_test(args["dcd_test"], tools.system_env("ssh_port"), tools.system_env("qmp_port"))
 if args["issue_qmp"]:
     tools.issue_qmp_cmd(args["issue_qmp"])
 
@@ -649,19 +645,16 @@ if args["start_arm"]:
 if args["test_einj"]:
     ras.test_aer_inject(args['test_einj'])
 
-if args["attach_fm"]:
+if args["attach_host"]:
     topo_file = tools.system_env("cxl_test_log_dir") + "/topo0"
     port_offset = 1
     if not os.path.exists(topo_file):
         print("No VM has been started yet")
         exit(1)
     topo = sh_cmd("cat %s"%topo_file)
-    if "allow-fm-attach=on" not in topo or "mctp-buf-init=on" not in topo:
-        print("The target VM must have share-mb and mb-share-init on")
-        exit(1)
 
     qemu_dir=system_path("QEMU_ROOT")
-    kernel_img=system_path("FM_KERNEL_ROOT")+"/arch/x86_64/boot/bzImage"
-    qemu_img = system_path("FM_QEMU_IMG")
+    kernel_img=system_path("KERNEL_ROOT_2")+"/arch/x86_64/boot/bzImage"
+    qemu_img = system_path("QEMU_IMG_2")
     topo = cxl.find_topology(args["topo"])
     run_qemu(qemu=QEMU, topo=topo, kernel=kernel_img, qemu_img = qemu_img, port_offset = 1, allow_multivm=True)

@@ -144,6 +144,24 @@ FM_USB="-object memory-backend-file,id=cxl-mem1,mem-path=/tmp/t3_cxl1.raw,size=2
  -device usb-cxl-mctp,bus=ehci.0,id=usb1,target=us0 \
  -device usb-cxl-mctp,bus=ehci.0,id=usb2,target=cxl-pmem1"
 
+MHD_HEAD = "-device usb-ehci,id=ehci \
+     -object memory-backend-file,id=cxl-mem1,mem-path=/tmp/t3_cxl1.raw,size=4G \
+     -object memory-backend-file,id=cxl-lsa1,mem-path=/tmp/t3_lsa1.raw,size=1M \
+     -device pxb-cxl,bus_nr=12,bus=pcie.0,id=cxl.1,hdm_for_passthrough=true \
+     -device cxl-rp,port=0,bus=cxl.1,id=cxl_rp_port0,chassis=0,slot=2 \
+     -device cxl-mhsld,bus=cxl_rp_port0,num-dc-regions=2,volatile-dc-memdev=cxl-mem1,id=cxl-mhd0,sn=99,mhd-head=0,mhd-state_file=mhd_metadata,mhd-init=true \
+     -device usb-cxl-mctp,bus=ehci.0,id=usb0,target=cxl-mhd0\
+     -machine cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=4G,cxl-fmw.0.interleave-granularity=1k"
+
+MHD_GUEST = "-device usb-ehci,id=ehci \
+     -object memory-backend-file,id=cxl-mem1,mem-path=/tmp/t3_cxl1.raw,size=4G \
+     -object memory-backend-file,id=cxl-lsa1,mem-path=/tmp/t3_lsa1.raw,size=1M \
+     -device pxb-cxl,bus_nr=12,bus=pcie.0,id=cxl.1,hdm_for_passthrough=true \
+     -device cxl-rp,port=0,bus=cxl.1,id=cxl_rp_port0,chassis=0,slot=2 \
+     -device cxl-mhsld,bus=cxl_rp_port0,num-dc-regions=2,volatile-dc-memdev=cxl-mem1,id=cxl-mhd0,sn=99,mhd-head=1,mhd-state_file=mhd_metadata,mhd-init=false \
+     -device usb-cxl-mctp,bus=ehci.0,id=usb0,target=cxl-mhd0\
+     -machine cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=4G,cxl-fmw.0.interleave-granularity=1k"
+
 
 topos = {
     "RP1": RP1,
@@ -151,7 +169,9 @@ topos = {
     "FM_CLIENT": FM_CLIENT,
     "FM_TARGET": FM_TARGET,
     "SW": SW,
-    "FM_USB": FM_USB
+    "FM_USB": FM_USB,
+    "MHD_HEAD": MHD_HEAD,
+    "MHD_GUEST": MHD_GUEST
 }
 
 def find_topology(top):
@@ -376,20 +396,20 @@ def find_endpoint_num(memdev):
         return ""
     return data[0]["endpoint"].replace("endpoint", "")
 
-def create_dax_device(region, echo=False):
+def create_dax_device(region, ssh_port, echo=False):
     if not region:
         return ""
 
     cmd="daxctl create-device -r %s"%region
     if echo:
         print(cmd)
-    rs=tools.execute_on_vm(cmd)
+    rs=tools.execute_on_vm(cmd,ssh_port=ssh_port)
     if echo:
         print(rs)
     cmd="daxctl list -r %s -D"%region
     if echo:
         print(cmd)
-    rs=tools.execute_on_vm(cmd)
+    rs=tools.execute_on_vm(cmd, ssh_port=ssh_port)
     if echo:
         print(rs)
     data=tools.output_to_json_data(rs)

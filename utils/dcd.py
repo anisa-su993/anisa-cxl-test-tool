@@ -31,8 +31,7 @@ def dc_region_idx():
 
 def create_add_extent_qmp_input(dev, extents):
     op="cxl-add-dynamic-capacity"
-
-    idx = dc_region_idx()
+    idx = 0
     ext_list=format_extent_list(extents)
     body=[
     { "execute": "qmp_capabilities" }
@@ -46,7 +45,7 @@ def create_add_extent_qmp_input(dev, extents):
         "extents": ext_list
     }
     }]
-    
+
     file="/tmp/qmp-add.json"
     with open(file, "w") as json_file:
         json.dump(body[0], json_file, indent=4)
@@ -55,8 +54,7 @@ def create_add_extent_qmp_input(dev, extents):
 
 def create_release_extent_qmp_input(dev, extents):
     op="cxl-release-dynamic-capacity"
-    
-    idx = dc_region_idx()
+    idx = 0
     ext_list=format_extent_list(extents)
     body=[
     { "execute": "qmp_capabilities" }
@@ -103,7 +101,7 @@ def create_display_extents_qmp_input(dev):
         json.dump(body[0], json_file, indent=4)
         json.dump(body[1], json_file, indent=4)
         json.dump(body[2], json_file, indent=4)
-    
+
     return file
 
 def show_dc_extents():
@@ -111,7 +109,7 @@ def show_dc_extents():
     rs=tools.sh_cmd(cmd)
     print(rs)
 
-def handle_dc_extents_op(memdev):
+def handle_dc_extents_op(memdev, qmp_port):
     if not memdev:
         print("Need a memdev for dc extent operations")
         return;
@@ -120,7 +118,7 @@ def handle_dc_extents_op(memdev):
     if not dev:
         print("Cannot find a device from command line")
         return
-    
+
     while True:
         choice=""
         try:
@@ -130,16 +128,16 @@ def handle_dc_extents_op(memdev):
         if choice == "0":
             extents=input("Input extent to add, for example (unit: MB): 0-128[,128-256]\nExtents: ")
             f=create_add_extent_qmp_input(dev,extents=extents)
-            tools.issue_qmp_cmd(f)
+            tools.issue_qmp_cmd(f, qmp_port)
         elif choice == "1":
             extents=input("Input extent to release, for example (unit: MB): 0-128[,128-256]\nExtents: ")
             f=create_release_extent_qmp_input(dev,extents=extents)
-            tools.issue_qmp_cmd(f)
+            tools.issue_qmp_cmd(f, qmp_port)
         elif choice == "2":
             f=create_display_extents_qmp_input(dev)
             if os.path.exists(extent_file):
                 os.remove(extent_file)
-            tools.issue_qmp_cmd(f)
+            tools.issue_qmp_cmd(f, qmp_port)
             show_dc_extents()
 
         elif choice == "9":

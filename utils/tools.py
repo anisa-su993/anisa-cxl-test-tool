@@ -252,12 +252,10 @@ def qmp_port():
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue;
 
-def issue_qmp_cmd(file):
+def issue_qmp_cmd(file, port):
     if not file:
         print("No qmp input file")
         return
-
-    port=qmp_port()
 
     if not package_installed("ncat"):
         install_packages("ncat")
