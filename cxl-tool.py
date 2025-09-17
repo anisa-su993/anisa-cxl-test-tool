@@ -54,7 +54,7 @@ def expend_variable(value):
                 continue
             item = item.strip("\"")
         rs += item + " "
-    
+
     return rs
 
 def read_config(conf):
@@ -501,7 +501,7 @@ if args["kconfig"]:
     tools.configure_kernel(kernel_dir=system_path("KERNEL_ROOT"))
 
 if args["create_image"]:
-    create_qemu_image(img_path=system_path("QEMU_IMG"))
+    create_qemu_image(img_path=system_path("QEMU_IMG"), size="8g")
 
 if args["raw"] and not args["topo"]:
     parser.error('--raw requires --topo/-T')

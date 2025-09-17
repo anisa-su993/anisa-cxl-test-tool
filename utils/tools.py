@@ -296,7 +296,7 @@ def setup_qemu(url, branch, qemu_dir, arch="", debug=True, reconfig=True):
             git_clone=False
 
     if git_clone:
-        cmd="git clone -b %s --single-branch %s %s"%(branch, url, qemu_dir)
+        cmd="git clone --depth 1 -b %s --single-branch %s %s"%(branch, url, qemu_dir)
         rs=sh_cmd(cmd, echo=True)
         print(rs)
     if reconfig:
@@ -325,7 +325,7 @@ def setup_kernel(url, branch, kernel_dir, kconfig="", mod_path="/opt/"):
         else:
             return
     if git_clone:
-        cmd="git clone -b %s --single-branch %s %s"%(branch, url, kernel_dir)
+        cmd="git clone --depth 1 -b %s --single-branch %s %s"%(branch, url, kernel_dir)
         exec_shell_direct(cmd, echo=True)
     else:
         cmd=input("Want to pull updates from remote repo for branch %s (Y/N):"%branch)
