@@ -54,7 +54,7 @@ def expend_variable(value):
                 continue
             item = item.strip("\"")
         rs += item + " "
-    
+
     return rs
 
 def read_config(conf):
@@ -81,7 +81,7 @@ def read_config(conf):
 
 def compile_ndctl(dir):
     cmd = "cd %s;\
-        meson setup build;\
+        meson setup build -Dsystemd=disabled;\
         meson compile -C build;\
         meson install -C build" %dir
     print(cmd)
@@ -578,7 +578,7 @@ if args["setup_mctp"]:
     mctp.mctp_setup(cxl_test_tool_dir+"/test-workflows/mctp.sh")
 
 if args["setup_mctp_usb"]:
-    mctp.mctp_setup(cxl_test_tool_dir+"/test-workflows/mctp-usb.sh")
+    mctp.mctp_setup(cxl_test_tool_dir+"test-workflows/mctp-usb.sh")
 
 if args["setup_mctp_fm"]:
     os.environ["ssh_port"] = str(int(tools.system_env("ssh_port")) + 1)

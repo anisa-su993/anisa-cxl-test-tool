@@ -6,7 +6,7 @@ import utils.tools as tools
 def install_mctp_pkg():
     url="https://github.com/CodeConstruct/mctp.git"
     mctp_dir="~/mctp"
-    
+
     if not tools.command_found_on_vm("mctp"):
         tools.install_packages_on_vm("libsystemd-dev python3-pytest meson")
     else:
@@ -27,7 +27,7 @@ def install_mctp_pkg():
 def install_mctp_pkg_usb():
     url="https://github.com/CodeConstruct/mctp.git"
     mctp_dir="/tmp/mctp"
-    
+
     if not tools.command_found_on_vm("mctp"):
         tools.install_packages_on_vm("libsystemd-dev python3-pytest meson")
     else:
