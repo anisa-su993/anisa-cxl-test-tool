@@ -144,18 +144,14 @@ FM_USB="-object memory-backend-file,id=cxl-mem1,mem-path=/tmp/t3_cxl1.raw,size=2
  -device usb-cxl-mctp,bus=ehci.0,id=usb1,target=us0 \
  -device usb-cxl-mctp,bus=ehci.0,id=usb2,target=cxl-pmem1"
 
-USB='-device usb-ehci,id=ehci \
-     -object memory-backend-file,id=cxl-mem1,mem-path=/tmp/t3_cxl1.raw,size=4G \
-     -object memory-backend-file,id=cxl-lsa1,mem-path=/tmp/t3_lsa1.raw,size=1M \
+USB='-object memory-backend-file,id=cxl-mem1,mem-path=/tmp/t3_cxl1.raw,size=12G \
+     -object memory-backend-file,id=cxl-lsa1,mem-path=/tmp/t3_lsa1.raw,size=1G \
+     -device usb-ehci,id=ehci \
      -device pxb-cxl,bus_nr=12,bus=pcie.0,id=cxl.1,hdm_for_passthrough=true \
      -device cxl-rp,port=0,bus=cxl.1,id=cxl_rp_port0,chassis=0,slot=2 \
-     -device cxl-upstream,port=2,sn=1234,bus=cxl_rp_port0,id=us0,addr=0.0,multifunction=on, \
-     -device cxl-switch-mailbox-cci,bus=cxl_rp_port0,addr=0.1,target=us0 \
-     -device cxl-downstream,port=0,bus=us0,id=swport0,chassis=0,slot=4 \
-     -device cxl-type3,bus=swport0,volatile-dc-memdev=cxl-mem1,id=cxl-dcd0,lsa=cxl-lsa1,num-dc-regions=2,sn=99 \
-     -device usb-cxl-mctp,bus=ehci.0,id=usb0,target=us0 \
+     -device cxl-type3,bus=cxl_rp_port0,id=cxl-dcd0,dc-regions-total-size=12G,num-dc-regions=1,sn=99 \
      -device usb-cxl-mctp,bus=ehci.0,id=usb1,target=cxl-dcd0\
-     -machine cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=4G,cxl-fmw.0.interleave-granularity=1k'
+     -machine cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=12G,cxl-fmw.0.interleave-granularity=1k'
 
 topos = {
     "RP1": RP1,
