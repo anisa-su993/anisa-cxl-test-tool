@@ -1,0 +1,11 @@
+{ "execute": "qmp_capabilities" }
+{
+    "execute": "object-add",
+    "arguments": {
+        "qom-type": "memory-backend-ram",
+        "id": "tm0",
+        "size": 8589934592,
+        "share": true,
+        "tag": "5be13bce-ae34-4a77-b6c3-16df975fcf1a"
+    }
+}

@@ -1,0 +1,17 @@
+{ "execute": "qmp_capabilities" }
+{
+    "execute": "cxl-add-dynamic-capacity",
+    "arguments": {
+        "path": "/machine/peripheral/cxl-dcd0",
+        "host-id": 0,
+        "selection-policy": "prescriptive",
+        "region": 0,
+        "tag": "5be13bce-ae34-4a77-b6c3-16df975fcf1a",
+        "extents": [
+            {
+                "offset": 0,
+                "len": 8589934592
+            }
+        ]
+    }
+}

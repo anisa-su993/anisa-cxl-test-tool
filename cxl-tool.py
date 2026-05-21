@@ -567,7 +567,7 @@ if args["create_dcR"]:
 if args["dcd_test"]:
     dcd_test(args["dcd_test"], tools.system_env("ssh_port"), tools.system_env("qmp_port"))
 if args["issue_qmp"]:
-    tools.issue_qmp_cmd(args["issue_qmp"])
+    tools.issue_qmp_cmd(args["issue_qmp"], args["qmp_port"])
 
 cxl_test_tool_dir=system_path("cxl_test_tool_dir")
 if args["setup_mctp"]:

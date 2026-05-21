@@ -162,6 +162,15 @@ MHD_GUEST = "-device usb-ehci,id=ehci \
      -device usb-cxl-mctp,bus=ehci.0,id=usb0,target=cxl-mhd0\
      -machine cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=4G,cxl-fmw.0.interleave-granularity=1k"
 
+DCD_TAG = '-object memory-backend-file,id=cxl-mem1,mem-path=/tmp/t3_cxl1.raw,size=12G \
+     -object memory-backend-file,id=cxl-lsa1,mem-path=/tmp/t3_lsa1.raw,size=1G \
+     -device usb-ehci,id=ehci \
+     -device pxb-cxl,bus_nr=12,bus=pcie.0,id=cxl.1,hdm_for_passthrough=true \
+     -device cxl-rp,port=0,bus=cxl.1,id=cxl_rp_port0,chassis=0,slot=2 \
+     -device cxl-type3,bus=cxl_rp_port0,id=cxl-dcd0,dc-regions-total-size=12G,num-dc-regions=1,sn=99 \
+     -device usb-cxl-mctp,bus=ehci.0,id=usb1,target=cxl-dcd0\
+     -machine cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=12G,cxl-fmw.0.interleave-granularity=1k'
+
 
 topos = {
     "RP1": RP1,
@@ -171,7 +180,8 @@ topos = {
     "SW": SW,
     "FM_USB": FM_USB,
     "MHD_HEAD": MHD_HEAD,
-    "MHD_GUEST": MHD_GUEST
+    "MHD_GUEST": MHD_GUEST,
+    "DCD_TAG": DCD_TAG
 }
 
 def find_topology(top):
@@ -184,6 +194,8 @@ def load_driver(host="localhost"):
         tools.execute_on_vm("modprobe -a cxl_acpi cxl_core cxl_pci cxl_port cxl_mem", echo=True)
         tools.execute_on_vm("modprobe -a nd_pmem")
         tools.execute_on_vm("modprobe -a dax device_dax dax_pmem")
+        # tools.execute_on_vm("modprobe cxl_test", echo=True)
+        # tools.execute_on_vm("modprobe dax_cxl", echo=True)
     else:
         tools.execute_on_vm("sudo modprobe -a cxl_acpi cxl_core cxl_pci cxl_port cxl_mem")
         tools.execute_on_vm("sudo modprobe -a nd_pmem")
