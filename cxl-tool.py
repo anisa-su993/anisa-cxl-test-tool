@@ -379,6 +379,7 @@ parser.add_argument('--qdb', help='gdb qemu', action='store_true')
 parser.add_argument('--kdb', help='gdb kernel', action='store_true')
 parser.add_argument('--install-ndctl', help='install ndctl on VM', action='store_true')
 parser.add_argument('--load-drv', help='install cxl driver on VM', action='store_true')
+parser.add_argument('--load-mock-drv', help='reload cxl_test mock drivers on VM', action='store_true')
 parser.add_argument('--unload-drv', help='uninstall cxl driver on VM', action='store_true')
 parser.add_argument('--create-region', help='create cxl region', required=False, default="")
 parser.add_argument('--destroy-region', help='destroy cxl region', required=False, default="")
@@ -389,6 +390,7 @@ parser.add_argument('--setup-kernel-fm', help='setup kernel for fm', action='sto
 parser.add_argument('--kconfig', help='configure kernel with menuconfig', action='store_true')
 parser.add_argument('-BQ', '--build-qemu', help='build qemu', action='store_true')
 parser.add_argument('-BK', '--build-kernel', help='build kernel', action='store_true')
+parser.add_argument('-BM', '--build-mock', help='build cxl unit test (mock) modules', action='store_true')
 parser.add_argument('--create-image', help='create a qemu image', action='store_true')
 parser.add_argument('--cxl-pmem-test', help='online pmem as system ram', required=False, default="")
 parser.add_argument('--cxl-vmem-test', help='online vmem as system ram', required=False, default="")
@@ -492,6 +494,8 @@ if args["build_qemu"]:
     tools.build_qemu(qemu_dir=system_path("QEMU_ROOT"))
 if args["build_kernel"]:
     tools.build_kernel(kernel_dir=system_path("KERNEL_ROOT"))
+if args["build_mock"]:
+    tools.build_mock(kernel_dir=system_path("KERNEL_ROOT"))
 if args["kconfig"]:
     tools.configure_kernel(kernel_dir=system_path("KERNEL_ROOT"))
 
@@ -552,6 +556,8 @@ if args["install_ndctl"]:
     install_ndctl(dir=ndctl_dir)
 if args["load_drv"]:
     cxl.load_driver()
+if args["load_mock_drv"]:
+    cxl.load_mock_driver()
 if args["unload_drv"]:
     cxl.unload_driver()
 if args["create_region"]:

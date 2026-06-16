@@ -62,6 +62,19 @@ cxl-tool.py --build-qemu
 ## git clone, configure and compile linux kernel
 cxl-tool.py --setup-kernel
 
+## build the cxl unit test (mock) modules
+cxl-tool.py --build-mock
+
+This builds the modules under tools/testing/cxl and installs them to /opt/.
+The kernel must already be built (e.g. via --build-kernel, which also builds
+these as part of its run).
+
+## reload the cxl_test mock drivers
+cxl-tool.py --load-mock-drv
+
+This unloads any cxl/dax drivers that are already loaded, then loads the
+cxl_test and dax_cxl mock drivers.
+
 ## run qemu
 cxl-tool.py --run -A kvm -T m2 
 

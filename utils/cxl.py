@@ -218,6 +218,23 @@ def unload_driver(host="localhost"):
     rs=tools.execute_on_vm("lsmod")
     print(rs)
 
+def load_mock_driver(host="localhost"):
+    user = tools.system_env("vm_usr")
+    sudo = "" if user == "root" else "sudo "
+
+    # Start from a clean slate: tear down any drivers that are already loaded
+    # so the cxl_test mock devices come up on their own topology. The mock
+    # modules (and dax_cxl) must be removed before the core modules they
+    # depend on, which unload_driver() then takes care of.
+    tools.execute_on_vm("%smodprobe -r dax_cxl cxl_test cxl_mock_mem cxl_mock"%sudo)
+    unload_driver(host=host)
+
+    tools.execute_on_vm("%smodprobe cxl_test"%sudo, echo=True)
+    tools.execute_on_vm("%smodprobe dax_cxl"%sudo, echo=True)
+
+    rs=tools.execute_on_vm("lsmod")
+    print(rs)
+
 def cxl_driver_loaded():
     cmd="cxl list -i"
     rs=tools.execute_on_vm(cmd)

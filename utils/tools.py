@@ -400,6 +400,16 @@ def build_qemu(qemu_dir):
 def is_bare_metal():
     ssh_port = system_env("ssh_port")
     return ssh_port == "22"
+def build_mock(kernel_dir, mod_path="/opt/"):
+    kernel_dir=os.path.expanduser(kernel_dir)
+    if not os.path.exists(kernel_dir):
+        print("No kernel source code found, may need run --setup-kernel")
+        return
+    make_test = 'cd %s;make M=tools/testing/cxl modules'%(kernel_dir)
+    exec_shell_direct(make_test, echo=True)
+    make_install_test='cd %s;sudo make M=tools/testing/cxl INSTALL_MOD_PATH=%s modules_install'%(kernel_dir, mod_path)
+    exec_shell_direct(make_install_test, echo=True)
+
 def build_kernel(kernel_dir, mod_path="/opt/"):
     install_packages("bc")
     kernel_dir=os.path.expanduser(kernel_dir)
@@ -413,6 +423,8 @@ def build_kernel(kernel_dir, mod_path="/opt/"):
     cmd="cd %s; %s"%(kernel_dir, make_cmd())
     exec_shell_direct(cmd, echo=True)
     exec_shell_direct("cd %s; sudo make modules_install INSTALL_MOD_PATH=%s"%(kernel_dir, mod_path))
+
+    build_mock(kernel_dir, mod_path)
 
     if is_bare_metal():
         rs = input("Install new kernel to the host (Y/N): ")
